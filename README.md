@@ -1,196 +1,216 @@
-# FinPilot — AI-Powered Personal Finance Platform
+# FinPilot 💰
 
-> Your AI co-pilot for smarter finances.
+### Smart Personal Finance & Budget Management Platform
 
-[![CI/CD](https://github.com/yourusername/finpilot/actions/workflows/ci.yml/badge.svg)](https://github.com/yourusername/finpilot/actions)
+> Track expenses, manage budgets, monitor financial health, and gain actionable insights through an intelligent personal finance dashboard.
+
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/)
 [![Django 5.1](https://img.shields.io/badge/django-5.1-green.svg)](https://djangoproject.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-blue.svg)](https://www.postgresql.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Render](https://img.shields.io/badge/Deployed-Render-purple.svg)](https://render.com)
 
-**[Live Demo →](https://finpilot.railway.app)** | **[API Docs →](https://finpilot.railway.app/api/docs/)**
+### 🌐 Live Application
 
----
+**Live Demo:** https://finpilot.onrender.com
 
-## Overview
-
-FinPilot is a production-ready, AI-powered personal finance management platform built with Django, Django REST Framework, and Claude AI. It transforms raw transaction data into actionable financial intelligence through an intuitive, modern UI.
-
----
-
-## Features
-
-### Core Finance
-- [x] Multi-account tracking (bank, cash, credit card, savings)
-- [x] Income & expense transaction management with full CRUD
-- [x] Category system with icons and colour coding (13 defaults + custom)
-- [x] Monthly budget limits per category with alert thresholds
-- [x] Savings goals with deadline tracking and monthly contribution calculator
-- [x] EMI & liability tracker with amortisation formula (handles compound interest)
-- [x] Recurring transaction rules (daily / weekly / monthly / yearly)
-
-### Analytics & Reporting
-- [x] Financial Health Score (0–100) from savings rate, expense ratio, EMI burden
-- [x] 6-month and 12-month cash flow trend charts (Chart.js)
-- [x] Spending breakdown by category (donut chart)
-- [x] Budget utilisation progress bars with over-budget alerts
-- [x] End-of-month spending forecasts using 3-month rolling averages
-- [x] Anomaly detection — flags transactions 2σ above category average
-
-### AI Features (Claude API)
-- [x] Weekly AI financial insights — personalised analysis of spending patterns
-- [x] Natural language transaction entry — "Spent ₹450 on Zomato yesterday"
-- [x] Statistical anomaly detection with human-readable alerts
-- [x] Rule-based insight fallback when API key not configured
-
-### Technical
-- [x] Full REST API with JWT authentication (DRF + SimpleJWT)
-- [x] OpenAPI / Swagger documentation at `/api/docs/`
-- [x] Per-user data isolation with UUID primary keys
-- [x] DecimalField for all monetary values (no float precision errors)
-- [x] Database indexes on high-frequency query fields
-- [x] Service layer architecture (business logic out of views)
-- [x] 40+ tests (models, services, views, API endpoints)
-- [x] Docker + docker-compose for local development
-- [x] GitHub Actions CI pipeline
+**API Documentation:** https://finpilot.onrender.com/api/docs/
 
 ---
 
-## Tech Stack
+## 📌 Overview
 
-| Layer | Technology |
-|---|---|
-| Backend | Django 5.1, Django REST Framework 3.15 |
-| Auth | JWT (SimpleJWT), Django sessions |
-| Database | PostgreSQL (production), SQLite (dev) |
-| AI | Anthropic Claude API (claude-sonnet-4) |
-| Frontend | Django Templates, Chart.js, Vanilla JS |
-| Fonts | Plus Jakarta Sans, DM Sans, JetBrains Mono |
-| Deployment | Railway / Heroku, Docker, Gunicorn, WhiteNoise |
-| CI/CD | GitHub Actions |
+FinPilot is a full-stack personal finance management platform built with Django and PostgreSQL that helps users gain complete visibility into their financial activities.
+
+The application enables users to manage multiple accounts, track income and expenses, monitor budgets, create savings goals, analyze spending behavior, and evaluate overall financial health through interactive dashboards and data-driven insights.
+
+Unlike basic expense trackers, FinPilot combines financial analytics, forecasting, anomaly detection, and performance monitoring to provide a comprehensive view of personal finances in a modern and user-friendly interface.
 
 ---
 
-## Architecture
+## 🚀 Key Features
 
-```
-finpilot/
-├── finpilot/           # Django project config
-│   ├── settings.py     # Environment-based, split dev/prod
-│   └── urls.py         # Root URL routing
-├── fin_manager/        # Core application
-│   ├── models.py       # 9 models: UserProfile, Account, Category,
-│   │                   #   Transaction, Budget, Liability,
-│   │                   #   SavingsGoal, RecurringRule, AIInsight
-│   ├── services.py     # Service layer: Dashboard, Insight,
-│   │                   #   Prediction, Transaction services
-│   ├── views.py        # Thin template views
-│   ├── api_views.py    # DRF ViewSets + API views
-│   ├── serializers.py  # DRF serializers with validation
-│   ├── filters.py      # django-filter Transaction filters
-│   ├── forms.py        # Django ModelForms
-│   └── tests.py        # 40+ unit + integration tests
-├── templates/          # Django HTML templates
-├── static/             # CSS design system + JS
-│   ├── css/main.css    # Complete design system (1000+ lines)
-│   └── js/main.js      # Modal, sidebar, tab interactions
-└── docker-compose.yml  # Local dev: app + postgres + redis
-```
+### 💳 Financial Management
 
-### API Endpoints
+* Multi-account management (Cash, Bank, Credit Card, Savings, Investments)
+* Income and expense tracking
+* Advanced transaction filtering and search
+* Category-based expense organization
+* Monthly budget planning and monitoring
+* Savings goal management
+* EMI and liability tracking
+* Recurring transaction automation
 
-| Endpoint | Method | Description |
-|---|---|---|
-| `/api/auth/register/` | POST | Create account |
-| `/api/auth/token/` | POST | Obtain JWT tokens |
-| `/api/dashboard/` | GET | Full dashboard data |
-| `/api/transactions/` | GET/POST | List, filter, create |
-| `/api/transactions/{id}/` | GET/PUT/DELETE | Detail CRUD |
-| `/api/budgets/current_month/` | GET | This month's budgets |
-| `/api/goals/{id}/add_funds/` | POST | Add to savings goal |
-| `/api/ai/insights/` | GET | AI-generated insights |
-| `/api/ai/nlp-transaction/` | POST | Natural language entry |
-| `/api/ai/predictions/` | GET | Spending forecasts |
-| `/api/reports/summary/` | GET | Historical summary |
+### 📊 Analytics & Financial Insights
 
----
+* Financial Health Score (0–100)
+* Monthly and yearly cash flow analysis
+* Category-wise spending breakdown
+* Budget utilization monitoring
+* Spending trend forecasting
+* Transaction anomaly detection
+* Personalized financial recommendations
 
-## Local Setup
+### 👤 User Experience
 
-### Option 1 — Docker (recommended)
+* Secure user authentication
+* Responsive mobile-first interface
+* Dark and light theme support
+* Interactive dashboard visualizations
+* Real-time notifications and alerts
 
-```bash
-git clone https://github.com/yourusername/finpilot.git
-cd finpilot
-cp .env.example .env          # Add your ANTHROPIC_API_KEY
-docker-compose up --build
-# App at http://localhost:8000
-```
+### 🔧 Developer Features
 
-### Option 2 — Manual
-
-```bash
-git clone https://github.com/yourusername/finpilot.git
-cd finpilot
-python -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env          # Edit: SECRET_KEY, DATABASE_URL, ANTHROPIC_API_KEY
-python manage.py migrate
-python manage.py runserver
-```
-
-### Environment Variables
-
-| Variable | Required | Description |
-|---|---|---|
-| `SECRET_KEY` | Yes | Django secret key — generate with `django-admin` |
-| `DEBUG` | No | `True` for dev, `False` for prod |
-| `DATABASE_URL` | No | Defaults to SQLite. Use postgres:// for prod |
-| `ANTHROPIC_API_KEY` | No | For AI features. App works without it (rule-based fallback) |
-| `SENTRY_DSN` | No | Error tracking |
+* Django REST Framework API
+* JWT Authentication
+* OpenAPI / Swagger Documentation
+* PostgreSQL Production Database
+* Service Layer Architecture
+* Docker Support
+* CI/CD Ready Deployment
 
 ---
 
-## Running Tests
+## 🏗️ System Architecture
 
-```bash
-python manage.py test fin_manager --verbosity=2
+```text
+User
+ │
+ ▼
+Authentication Layer
+ │
+ ▼
+Dashboard
+ │
+ ├── Account Management
+ ├── Transaction Management
+ ├── Budget Tracking
+ ├── Savings Goals
+ └── Liability Tracking
+          │
+          ▼
+Financial Analytics Engine
+          │
+          ├── Health Score
+          ├── Forecasting
+          ├── Budget Analysis
+          ├── Anomaly Detection
+          └── Recommendations
+                    │
+                    ▼
+Charts & Reports
 ```
 
 ---
 
-## Deployment (Railway)
+## 📊 Core Modules
 
-1. Push repo to GitHub
-2. Create new project on [Railway](https://railway.app)
-3. Add PostgreSQL service
-4. Set environment variables (copy from `.env.example`)
-5. Deploy — the `Procfile` handles migrations + gunicorn automatically
+### Account Management
+
+Manage multiple financial accounts from a single dashboard.
+
+### Transaction Management
+
+Create, update, categorize, and track financial transactions.
+
+### Budget Planner
+
+Set monthly spending limits and monitor utilization.
+
+### Savings Goals
+
+Track progress toward financial targets and future purchases.
+
+### Financial Analytics
+
+Analyze spending habits using interactive charts and reports.
+
+### Forecasting Engine
+
+Estimate future spending patterns using historical transaction data.
+
+### Financial Health Score
+
+Evaluate financial wellness based on:
+
+* Savings Rate
+* Expense Control
+* EMI Burden
 
 ---
 
-## AI Features
+## 🛠️ Technology Stack
 
-### How insights work
-Every week (or on demand), FinPilot sends a summary of your last 90 days of categorised transactions to the Claude API. The model returns 3 structured insights (trend / anomaly / saving opportunity) which are cached in the database. The app displays them as insight cards on the dashboard and AI Insights page.
-
-If `ANTHROPIC_API_KEY` is not set, the app falls back to rule-based insights (savings rate below 20%, budget overspend alerts, etc.).
-
-### Natural language transaction entry
-Type "Spent ₹450 on Swiggy yesterday" in the AI Entry tab. Claude extracts `amount`, `date`, `transaction_type`, and `category_hint`, then creates the transaction automatically. The transaction is flagged with an AI badge.
+| Layer           | Technology            |
+| --------------- | --------------------- |
+| Backend         | Django 5.1            |
+| API             | Django REST Framework |
+| Authentication  | JWT + Django Sessions |
+| Database        | PostgreSQL / SQLite   |
+| Frontend        | HTML, CSS, JavaScript |
+| Charts          | Chart.js              |
+| Deployment      | Render                |
+| Server          | Gunicorn              |
+| Static Files    | WhiteNoise            |
+| Version Control | Git & GitHub          |
 
 ---
 
-## Resume Impact
+## 🎯 Skills Demonstrated
 
-> *Built FinPilot, an AI-powered personal finance platform using Django REST Framework, PostgreSQL, and Claude AI — featuring multi-account tracking, budget analytics, Financial Health Score, natural language transaction entry, and spending anomaly detection. Deployed with Docker, GitHub Actions CI, and JWT-authenticated REST API with OpenAPI documentation.*
+This project demonstrates practical experience in:
+
+✅ Full-Stack Web Development
+
+✅ Django Framework
+
+✅ REST API Development
+
+✅ Authentication & Authorization
+
+✅ Database Design
+
+✅ Financial Analytics
+
+✅ Data Visualization
+
+✅ PostgreSQL Integration
+
+✅ Cloud Deployment
+
+✅ Software Architecture
 
 ---
 
-## Roadmap
+## 📈 Future Enhancements
 
-- [ ] CSV/Excel bank statement import with auto-categorisation
-- [ ] Monthly PDF financial report (email delivery)
-- [ ] WhatsApp bot for transaction logging
-- [ ] Investment portfolio tracking (NSE/BSE integration)
-- [ ] Family/shared budget accounts
-- [ ] Debt payoff planner (avalanche vs snowball)
+* CSV and PDF financial reports
+* Savings goal prediction
+* Expense categorization automation
+* Financial recommendation engine
+* Investment portfolio tracking
+* Multi-currency support
+* Email reports and notifications
+* Mobile application
+
+---
+
+## 👨‍💻 Author
+
+### Pravesh Nandanwar
+
+Computer Science & Engineering
+
+GitHub: https://github.com/pn-dev-in
+
+---
+
+## ⭐ Support
+
+If you found this project useful, consider giving it a star on GitHub.
+
+Feedback, feature requests, and contributions are always welcome.
+
+---
+
+### Track Every Rupee. Plan Every Goal. Build Better Financial Habits.
