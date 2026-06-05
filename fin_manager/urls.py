@@ -1,0 +1,31 @@
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.landing, name='landing'),
+    path('dashboard/', views.dashboard, name='dashboard'),
+    path('transactions/', views.transactions, name='transactions'),
+    path('transactions/delete/<uuid:pk>/', views.delete_transaction, name='delete-transaction'),
+    path('budgets/', views.budgets, name='budgets'),
+    path('budgets/', views.budgets, name='budgets'),
+    path('budgets/<uuid:pk>/edit/', views.edit_budget, name='edit-budget'),
+    path('budgets/<uuid:pk>/delete/', views.delete_budget, name='delete-budget'),
+    path('api/budgets/<uuid:pk>/', views.get_budget_json, name='get-budget-json'),
+    path('goals/', views.goals, name='goals'),
+    path('goals/<uuid:pk>/add-funds/', views.goal_add_funds, name='web-goal-add-funds'),
+    path('goals/<uuid:pk>/edit/', views.edit_goal, name='edit-goal'),
+    path('goals/<uuid:pk>/delete/', views.delete_goal, name='delete-goal'),
+    path('liabilities/', views.liabilities, name='liabilities'),
+    path('liabilities/<uuid:pk>/edit/', views.edit_liability, name='edit-liability'),
+    path('liabilities/<uuid:pk>/delete/', views.delete_liability, name='delete-liability'),
+    path('api/liabilities/<uuid:pk>/', views.get_liability_json, name='get-liability-json'),
+    path('reports/', views.reports, name='reports'),
+    path('ai/', views.ai_insights, name='ai_insights'),
+    path('settings/', views.settings_view, name='settings'),
+    path('settings/change-password/', views.change_password, name='change-password'),
+    path('settings/add-account/', views.add_account, name='add-account'),
+    path('settings/accounts/<uuid:pk>/edit/', views.edit_account, name='edit-account'),
+    path('settings/accounts/<uuid:pk>/delete/', views.delete_account, name='delete-account'),
+    path('api/accounts/<uuid:pk>/', views.get_account_json, name='get-account-json'),
+    path('accounts/register/', views.register, name='register'),
+]

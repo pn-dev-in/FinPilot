@@ -1,0 +1,38 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Account — FinPilot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/main.css' %}">
+  <link rel="stylesheet" href="{% static 'css/landing.css' %}">
+</head>
+<body class="auth-body">
+  <div class="auth-card">
+    <a href="{% url 'landing' %}" class="logo" style="margin-bottom:1.5rem;display:inline-flex;text-decoration:none">
+      <div class="logo-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2"/></svg></div>
+      <span class="logo-text">FinPilot</span>
+    </a>
+    <h1 class="auth-title">Create your account</h1>
+    <p class="auth-sub">Start managing your finances smarter.</p>
+
+    <form method="post" class="auth-form">
+      {% csrf_token %}
+      {% for field in form %}
+      <div class="form-group">
+        <label class="fp-label">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}
+        <div class="fp-error">{{ field.errors|join:", " }}</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+      <button type="submit" class="btn-primary" style="width:100%;margin-top:1rem">Create Account →</button>
+    </form>
+    <p class="auth-footer">Already have an account? <a href="{% url 'login' %}">Sign in</a></p>
+  </div>
+</body>
+</html>

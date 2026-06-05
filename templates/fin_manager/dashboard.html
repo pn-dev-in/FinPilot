@@ -1,0 +1,646 @@
+{% extends "fin_manager/base.html" %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'transactions' %}" class="btn-primary btn-sm">+ Add Transaction</a>
+{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-grid">
+
+  <!-- KPI strip -->
+  <div class="kpi-strip">
+    <div class="kpi-card">
+      <div class="kpi-label">Total Balance</div>
+      <div class="kpi-value">{{ currency }}{{ balance|floatformat:0 }}</div>
+      <div class="kpi-sub">Across all accounts</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Monthly Income</div>
+      <div class="kpi-value kpi-income">{{ currency }}{{ income|floatformat:0 }}</div>
+      <div class="kpi-sub {% if income_delta and income_delta > 0 %}delta-up{% elif income_delta %}delta-down{% endif %}">
+        {% if income_delta %}{{ income_delta|floatformat:1 }}% vs last month{% else %}This month{% endif %}
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Monthly Expense</div>
+      <div class="kpi-value kpi-expense">{{ currency }}{{ expense|floatformat:0 }}</div>
+      <div class="kpi-sub {% if expense_delta and expense_delta > 0 %}delta-down{% elif expense_delta %}delta-up{% endif %}">
+        {% if expense_delta %}{{ expense_delta|floatformat:1 }}% vs last month{% else %}This month{% endif %}
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Net Savings</div>
+      <div class="kpi-value {% if savings >= 0 %}kpi-income{% else %}kpi-expense{% endif %}">{{ currency }}{{ savings|floatformat:0 }}</div>
+      <div class="kpi-sub {% if savings_delta and savings_delta > 0 %}delta-up{% elif savings_delta %}delta-down{% endif %}">
+        {% if savings_delta %}{{ savings_delta|floatformat:1 }}% vs last month{% else %}This month{% endif %}
+      </div>
+    </div>
+    <!-- Savings Rate Card (NEW - added before Health Score) -->
+    <div class="kpi-card">
+    <div class="kpi-label">Savings Rate</div>
+    <div class="kpi-value" style="color:{% if savings_rate >= 20 %}#1D9E75{% elif savings_rate >= 10 %}#378ADD{% else %}#D85A30{% endif %}">
+      {{ savings_rate|floatformat:1 }}%
+    </div>
+    <div class="kpi-sub">
+      of {{ currency }}{{ income|floatformat:0 }} income
+    </div>
+  </div>
+  </div>
+
+  <!-- Health Score Gauge + Trend Chart -->
+  <div class="dash-row">
+    <div class="dash-card dash-card-sm">
+      <div class="card-header">
+        <h2>Financial Health Score</h2>
+      </div>
+      <div class="gauge-wrapper">
+        <canvas id="gaugeChart" width="200" height="120"></canvas>
+        <div class="gauge-label">
+          <span class="gauge-val" style="color:{{ score_color }}">{{ health_score }}</span>
+          <span class="gauge-desc">{{ score_label }}</span>
+        </div>
+      </div>
+      <div class="gauge-legend">
+        <span class="gl-item" style="--c:#D85A30">0–39 Needs Attention</span>
+        <span class="gl-item" style="--c:#BA7517">40–59 Fair</span>
+        <span class="gl-item" style="--c:#378ADD">60–79 Good</span>
+        <span class="gl-item" style="--c:#1D9E75">80–100 Excellent</span>
+      </div>
+    </div>
+
+    <div class="dash-card dash-card-lg">
+      <div class="card-header">
+        <h2>Cash Flow — Last 6 Months</h2>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="trendChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Expense Breakdown + Budget Utilisation -->
+  <div class="dash-row">
+    <div class="dash-card dash-card-sm">
+      <div class="card-header">
+        <h2>Spending by Category</h2>
+      </div>
+      {% if expense_by_category %}
+      <div class="chart-wrap chart-wrap-pie">
+  <canvas id="pieChart"></canvas>
+</div>
+      <div class="donut-legend">
+        {% for cat in expense_by_category %}
+        <div class="legend-row">
+          <span class="legend-dot" style="background:{{ cat.category__color }}"></span>
+          <span class="legend-name">{{ cat.category__name }}</span>
+          <span class="legend-val">{{ currency }}{{ cat.total|floatformat:0 }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">No expense data this month.</div>
+      {% endif %}
+    </div>
+
+    <div class="dash-card dash-card-lg">
+      <div class="card-header">
+        <h2>Budget Utilisation</h2>
+        <a href="{% url 'budgets' %}" class="card-link">Manage →</a>
+      </div>
+      {% if budget_utilisation %}
+      <div class="budget-list">
+        {% for b in budget_utilisation %}
+        <div class="budget-row">
+          <div class="budget-meta">
+            <span class="budget-name">{{ b.category }}</span>
+            <span class="budget-amounts">{{ currency }}{{ b.spent|floatformat:0 }} / {{ currency }}{{ b.limit|floatformat:0 }}</span>
+          </div>
+          <div class="budget-bar-wrap">
+            <div class="budget-bar-bg">
+              <div class="budget-bar-fill {% if b.is_over %}bar-over{% elif b.is_near %}bar-near{% endif %}"
+                   style="width:{% if b.percent > 100 %}100{% else %}{{ b.percent }}{% endif %}%"></div>
+            </div>
+            <span class="budget-pct {% if b.is_over %}text-danger{% elif b.is_near %}text-warn{% endif %}">{{ b.percent }}%</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        No budgets set. <a href="{% url 'budgets' %}">Set your first budget →</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+    <!-- AI Insights + Savings Goals -->
+  <div class="dash-row">
+    <div class="dash-card dash-card-lg">
+      <div class="card-header">
+        <h2>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2" style="margin-right:6px;vertical-align:-2px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          AI Insights
+        </h2>
+        <a href="{% url 'ai_insights' %}" class="card-link">View all →</a>
+      </div>
+      {% if ai_insights %}
+      <div class="insight-list">
+        <!-- Show only first 2 insights to avoid duplication -->
+        {% for insight in ai_insights|slice:":2" %}
+        <div class="insight-card insight-{{ insight.insight_type }}">
+          <div class="insight-title">{{ insight.title }}</div>
+          <div class="insight-body">{{ insight.body|truncatewords:20 }}</div>
+          {% if insight.change_percent %}
+          <div class="insight-delta {% if insight.change_percent > 0 %}delta-up{% else %}delta-down{% endif %}">
+            {% if insight.change_percent > 0 %}↑{% else %}↓{% endif %} {{ insight.change_percent|floatformat:1 }}%
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <a href="{% url 'ai_insights' %}">Generate AI insights →</a>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="dash-card dash-card-sm">
+      <div class="card-header">
+        <h2>Savings Goals</h2>
+        <a href="{% url 'goals' %}" class="card-link">View all →</a>
+      </div>
+      {% if goals %}
+      <div class="goal-list">
+        {% for goal in goals %}
+        <div class="goal-item">
+          <div class="goal-header">
+            <span class="goal-name">{{ goal.name }}</span>
+            <span class="goal-pct">{{ goal.percent_complete }}%</span>
+          </div>
+          <div class="goal-bar-bg">
+            <div class="goal-bar-fill" style="width:{{ goal.percent_complete }}%;background:{{ goal.color }}"></div>
+          </div>
+          <div class="goal-amounts">
+            <span>{{ currency }}{{ goal.current_amount|floatformat:0 }}</span>
+            <span>{{ currency }}{{ goal.target_amount|floatformat:0 }}</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <a href="{% url 'goals' %}">Create your first goal →</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Recent Transactions -->
+  <div class="dash-card full-width">
+    <div class="card-header">
+      <h2>Recent Transactions</h2>
+      <a href="{% url 'transactions' %}" class="card-link">View all →</a>
+    </div>
+    {% if recent_transactions %}
+    <div class="tx-table-wrap">
+      <table class="tx-table">
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th>Category</th>
+            <th>Date</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for tx in recent_transactions %}
+          <tr>
+            <td>
+              <span class="tx-desc">{{ tx.description }}</span>
+              {% if tx.is_recurring %}<span class="tx-badge">recurring</span>{% endif %}
+            </td>
+            <td>
+              {% if tx.category %}
+              <span class="cat-tag" style="background:{{ tx.category.color }}20;color:{{ tx.category.color }}">
+                {{ tx.category.name }}
+              </span>
+              {% else %}—{% endif %}
+            </td>
+            <td class="tx-date">{{ tx.date|date:"d M Y" }}</td>
+            <td class="tx-amount {% if tx.transaction_type == 'income' %}amount-income{% else %}amount-expense{% endif %}">
+              {% if tx.transaction_type == 'income' %}+{% else %}−{% endif %}{{ currency }}{{ tx.amount|floatformat:0 }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      No transactions yet. <a href="{% url 'transactions' %}">Add your first →</a>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+
+<style>
+  /* Budget Utilisation Progress Bar Fixes */
+  .budget-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+  }
+
+  .budget-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .budget-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+
+  .budget-name {
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--text);
+  }
+
+  .budget-amounts {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .budget-bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+  }
+
+  .budget-bar-bg {
+    flex: 1;
+    height: 8px;
+    background-color: rgba(120, 120, 120, 0.2);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .budget-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+  }
+
+  /* Progress bar colors based on percentage */
+  .budget-bar-fill.bar-over {
+    background-color: #D85A30;
+  }
+
+  .budget-bar-fill.bar-near {
+    background-color: #BA7517;
+  }
+
+  .budget-bar-fill:not(.bar-over):not(.bar-near) {
+    background-color: #1D9E75;
+  }
+
+  .budget-pct {
+    font-size: 0.75rem;
+    font-weight: 500;
+    min-width: 45px;
+    text-align: right;
+  }
+
+  .budget-pct.text-danger {
+    color: #D85A30;
+  }
+
+  .budget-pct.text-warn {
+    color: #BA7517;
+  }
+
+  .budget-pct:not(.text-danger):not(.text-warn) {
+    color: #1D9E75;
+  }
+
+
+  .full-width {
+    width: 100%;
+  }
+
+  /* Goal list fixes */
+  .goal-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .goal-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .goal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .goal-name {
+    font-weight: 500;
+    font-size: 0.9rem;
+  }
+
+  .goal-pct {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--primary);
+  }
+
+  .goal-bar-bg {
+    background: var(--surface-dark);
+    border-radius: 1rem;
+    height: 6px;
+    overflow: hidden;
+  }
+
+  .goal-bar-fill {
+    height: 100%;
+    border-radius: 1rem;
+    transition: width 0.3s ease;
+  }
+
+  .goal-amounts {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  /* Insight list fixes */
+  .insight-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .insight-card {
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    background: var(--surface-dark);
+  }
+
+  .insight-title {
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .insight-body {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .insight-delta {
+    font-size: 0.7rem;
+    margin-top: 0.25rem;
+  }
+
+  .delta-up {
+    color: #1D9E75;
+  }
+
+  .delta-down {
+    color: #D85A30;
+  }
+
+    /* Limit insights list height */
+  .insight-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 280px;
+    overflow-y: auto;
+  }
+
+  .insight-list::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .insight-list::-webkit-scrollbar-track {
+    background: var(--surface-dark);
+    border-radius: 2px;
+  }
+
+  .insight-list::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 2px;
+  }
+
+  /* Limit goals list height */
+  .goal-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-height: 280px;
+    overflow-y: auto;
+  }
+
+  .goal-list::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .goal-list::-webkit-scrollbar-track {
+    background: var(--surface-dark);
+    border-radius: 2px;
+  }
+
+  .goal-list::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 2px;
+  }
+</style>
+<script>
+const CURRENCY = "{{ currency }}";
+const trendData = {{ trend_json|safe }};
+const categoryData = {{ category_json|safe }};
+const healthScore = {{ health_score }};
+const scoreColor = "{{ score_color }}";
+
+// Gauge chart (doughnut half)
+(function() {
+  const score = healthScore;
+  const remaining = 100 - score;
+  const ctx = document.getElementById('gaugeChart');
+  if (!ctx) return;
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      datasets: [{
+        data: [score, remaining],
+        backgroundColor: [scoreColor, 'rgba(120,120,120,0.1)'],
+        borderWidth: 0,
+        circumference: 180,
+        rotation: -90,
+      }]
+    },
+    options: {
+      responsive: false,
+      cutout: '72%',
+      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      animation: { duration: 1200, easing: 'easeOutQuart' }
+    }
+  });
+})();
+
+// Trend chart
+(function() {
+  const ctx = document.getElementById('trendChart');
+  if (!ctx || !trendData.length) return;
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: trendData.map(d => d.month),
+      datasets: [
+        {
+          label: 'Income',
+          data: trendData.map(d => d.income),
+          backgroundColor: 'rgba(29,158,117,0.8)',
+          borderRadius: 4,
+          borderSkipped: false,
+        },
+        {
+          label: 'Expense',
+          data: trendData.map(d => d.expense),
+          backgroundColor: 'rgba(216,90,48,0.8)',
+          borderRadius: 4,
+          borderSkipped: false,
+        },
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#888', font: { family: 'DM Sans', size: 12 } } },
+        tooltip: {
+          callbacks: {
+            label: ctx => CURRENCY + ctx.parsed.y.toLocaleString('en-IN')
+          }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#888', font: { family: 'DM Sans' } } },
+        y: {
+          grid: { color: 'rgba(120,120,120,0.1)' },
+          ticks: {
+            color: '#888',
+            font: { family: 'DM Sans' },
+            callback: v => CURRENCY + v.toLocaleString('en-IN')
+          }
+        }
+      }
+    }
+  });
+})();
+
+// Pie Chart (style matching your reference)
+(function() {
+  const ctx = document.getElementById('pieChart');
+  if (!ctx || !categoryData.length) return;
+  
+  // Calculate total for percentages
+  const total = categoryData.reduce((sum, d) => sum + d.value, 0);
+  
+  new Chart(ctx, {
+    type: 'pie',
+    data: {
+      labels: categoryData.map(d => `${d.label} ${((d.value / total) * 100).toFixed(0)}%`),
+      datasets: [{
+        data: categoryData.map(d => d.value),
+        backgroundColor: categoryData.map(d => d.color),
+        borderWidth: 2,
+        borderColor: 'var(--surface)',
+        hoverOffset: 8,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: {
+            color: '#888',
+            font: { family: 'DM Sans', size: 11 },
+            usePointStyle: true,
+            pointStyle: 'circle',
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const value = context.parsed;
+              const percentage = ((value / total) * 100).toFixed(1);
+              return `${context.label.split(' ')[0]}: ${CURRENCY}${value.toLocaleString('en-IN')} (${percentage}%)`;
+            }
+          }
+        }
+      },
+      layout: {
+        padding: 10
+      }
+    }
+  });
+})();
+
+// Auto-dismiss toasts
+setTimeout(() => {
+  document.querySelectorAll('.toast').forEach(t => t.remove());
+}, 4000);
+
+// Add to dashboard.html extra_js section
+function updateChartsTheme() {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const textColor = isDark ? '#e5e7eb' : '#111827';
+    const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+    
+    // Update existing charts
+    if (window.trendChart) {
+        window.trendChart.options.scales.x.ticks.color = textColor;
+        window.trendChart.options.scales.y.ticks.color = textColor;
+        window.trendChart.options.plugins.legend.labels.color = textColor;
+        window.trendChart.update();
+    }
+    
+    if (window.pieChart) {
+        window.pieChart.options.plugins.legend.labels.color = textColor;
+        window.pieChart.update();
+    }
+}
+
+// Make function global
+window.updateChartsTheme = updateChartsTheme;
+</script>
+{% endblock %}

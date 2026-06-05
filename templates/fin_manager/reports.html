@@ -1,0 +1,144 @@
+{% extends "fin_manager/base.html" %}
+{% load static %}
+
+{% block title %}Reports{% endblock %}
+{% block page_title %}Reports & Analytics{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="page-content">
+
+  <div class="dash-row">
+    <div class="dash-card dash-card-sm" style="text-align:center;padding:2rem">
+      <div class="kpi-label">Financial Health Score</div>
+      <div style="font-size:56px;font-weight:700;color:{{ score_color }};font-family:var(--font-display);line-height:1.1;margin:.5rem 0">{{ score }}</div>
+      <div class="score-pill" style="background:{{ score_color }}20;color:{{ score_color }};display:inline-block;padding:4px 16px;border-radius:20px;font-size:13px;font-weight:500">{{ score_label }}</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:1rem;line-height:1.7">
+        Based on savings ratio,<br>expense control, and EMI burden.
+      </div>
+    </div>
+
+    <div class="dash-card dash-card-lg">
+      <div class="card-header"><h2>12-Month Cash Flow</h2></div>
+      <div class="chart-wrap">
+        <canvas id="annualChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="dash-card full-width">
+    <div class="card-header"><h2>Spending Forecast — This Month</h2></div>
+    {% if predictions %}
+    <div class="forecast-table-wrap">
+      <table class="tx-table">
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Spent so far</th>
+            <th>Projected end-of-month</th>
+            <th>3-month avg</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in predictions %}
+          <tr>
+            <td>
+              <span class="cat-tag" style="background:{{ p.color }}20;color:{{ p.color }}">{{ p.category }}</span>
+            </td>
+            <td>{{ currency }}{{ p.current }}</td>
+            <td class="{% if p.over_average %}text-danger{% else %}text-success{% endif %}">
+              {{ currency }}{{ p.projected }}
+            </td>
+            <td>{{ currency }}{{ p.avg_monthly }}</td>
+            <td>
+              {% if p.over_average %}
+              <span class="type-badge type-expense">↑ Above avg</span>
+              {% else %}
+              <span class="type-badge type-income">✓ On track</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">No transaction data yet for predictions.</div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CURRENCY = "{{ currency }}";
+const trendData = {{ trend_json|safe }};
+
+(function() {
+  const ctx = document.getElementById('annualChart');
+  if (!ctx) return;
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: trendData.map(d => d.month),
+      datasets: [
+        {
+          label: 'Income',
+          data: trendData.map(d => d.income),
+          borderColor: '#1D9E75',
+          backgroundColor: 'rgba(29,158,117,0.08)',
+          tension: 0.4,
+          fill: true,
+          pointBackgroundColor: '#1D9E75',
+          pointRadius: 4,
+        },
+        {
+          label: 'Expense',
+          data: trendData.map(d => d.expense),
+          borderColor: '#D85A30',
+          backgroundColor: 'rgba(216,90,48,0.06)',
+          tension: 0.4,
+          fill: true,
+          pointBackgroundColor: '#D85A30',
+          pointRadius: 4,
+        },
+        {
+          label: 'Savings',
+          data: trendData.map(d => d.savings),
+          borderColor: '#378ADD',
+          borderDash: [4, 4],
+          tension: 0.4,
+          fill: false,
+          pointBackgroundColor: '#378ADD',
+          pointRadius: 3,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#888', font: { family: 'DM Sans' } } },
+        tooltip: {
+          callbacks: {
+            label: ctx => ctx.dataset.label + ': ' + CURRENCY + ctx.parsed.y.toLocaleString('en-IN')
+          }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#888' } },
+        y: {
+          grid: { color: 'rgba(120,120,120,0.1)' },
+          ticks: { color: '#888', callback: v => CURRENCY + v.toLocaleString('en-IN') }
+        }
+      }
+    }
+  });
+})();
+</script>
+{% endblock %}

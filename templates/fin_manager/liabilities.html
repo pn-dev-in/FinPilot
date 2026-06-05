@@ -1,0 +1,302 @@
+{% extends "fin_manager/base.html" %}
+{% load static %}
+
+{% block title %}Liabilities{% endblock %}
+{% block page_title %}Liabilities & EMIs{% endblock %}
+
+{% block topbar_actions %}
+<button class="btn-primary btn-sm" onclick="openModal('addLiabilityModal')">+ Add Liability</button>
+{% endblock %}
+
+{% block content %}
+<div class="page-content">
+  <div class="kpi-strip kpi-strip-sm">
+    <div class="kpi-card">
+      <div class="kpi-label">Total Monthly EMI</div>
+      <div class="kpi-value kpi-expense">{{ currency }}{{ total_monthly|floatformat:0 }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Active Liabilities</div>
+      <div class="kpi-value">{{ liabilities|length }}</div>
+    </div>
+  </div>
+
+  {% if liabilities %}
+  <div class="liability-list">
+    {% for l in liabilities %}
+    <div class="liability-card">
+      <div class="liability-header">
+        <div>
+          <div class="liability-name">{{ l.name }}</div>
+          <span class="type-badge type-expense">{{ l.get_liability_type_display }}</span>
+        </div>
+        <div class="liability-actions">
+          <div class="liability-principal">{{ currency }}{{ l.principal|floatformat:0 }}</div>
+          <div class="liability-action-buttons">
+            <button class="icon-btn" onclick="editLiability('{{ l.id }}')" title="Edit">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 3l4 4-9 9-4 1 1-4 9-9z"/>
+              </svg>
+            </button>
+            <button class="icon-btn icon-btn-danger" onclick="deleteLiability('{{ l.id }}', '{{ l.name|escapejs }}')" title="Delete">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="liability-details">
+        {% if l.is_long_term %}
+        <div class="liability-detail">
+          <span class="ld-label">Monthly Payment</span>
+          <span class="ld-val text-danger">{{ currency }}{{ l.monthly_payment|floatformat:0 }}</span>
+        </div>
+        <div class="liability-detail">
+          <span class="ld-label">Interest Rate</span>
+          <span class="ld-val">{{ l.interest_rate }}% p.a.</span>
+        </div>
+        <div class="liability-detail">
+          <span class="ld-label">Start</span>
+          <span class="ld-val">{{ l.start_date|date:"d M Y" }}</span>
+        </div>
+        <div class="liability-detail">
+          <span class="ld-label">End</span>
+          <span class="ld-val">{{ l.end_date|date:"d M Y" }}</span>
+        </div>
+        {% else %}
+        <div class="liability-detail">
+          <span class="ld-label">Type</span>
+          <span class="ld-val">One-time payment</span>
+        </div>
+        <div class="liability-detail">
+          <span class="ld-label">Date</span>
+          <span class="ld-val">{{ l.start_date|date:"d M Y" }}</span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-card">
+    <div class="empty-icon">💳</div>
+    <h3>No liabilities recorded</h3>
+    <p>Track your EMIs, loans, and one-time debts here.</p>
+    <button class="btn-primary" onclick="openModal('addLiabilityModal')">Add a liability →</button>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Add Liability Modal -->
+<div class="modal-overlay" id="addLiabilityModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Add Liability</h3>
+      <button class="modal-close" onclick="closeModal('addLiabilityModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <form method="post" action="{% url 'liabilities' %}" id="liabilityForm">
+        {% csrf_token %}
+        <div class="form-grid">
+          {% for field in form %}
+          <div class="form-group {% if field.name == 'is_long_term' %}form-group-checkbox{% endif %}" id="field-{{ field.name }}">
+            <label class="fp-label {% if field.name == 'is_long_term' %}fp-checkbox-label{% endif %}">
+              {% if field.name == 'is_long_term' %}{{ field }}{% endif %}
+              {{ field.label }}
+            </label>
+            {% if field.name != 'is_long_term' %}{{ field }}{% endif %}
+            {% if field.errors %}<div class="fp-error">{{ field.errors|join:", " }}</div>{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-ghost" onclick="closeModal('addLiabilityModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Add Liability</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Liability Modal -->
+<div class="modal-overlay" id="editLiabilityModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Edit Liability</h3>
+      <button class="modal-close" onclick="closeModal('editLiabilityModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <form method="post" id="editLiabilityForm">
+        {% csrf_token %}
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="fp-label">Name</label>
+            <input type="text" name="name" id="editName" class="fp-input" required>
+          </div>
+          <div class="form-group">
+            <label class="fp-label">Liability Type</label>
+            <select name="liability_type" id="editLiabilityType" class="fp-input">
+              <option value="emi">EMI / Loan</option>
+              <option value="credit_card">Credit Card</option>
+              <option value="personal">Personal Loan</option>
+              <option value="one_time">One-time Payment</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="fp-label">Principal Amount ({{ currency }})</label>
+            <input type="number" name="principal" id="editPrincipal" class="fp-input" step="0.01" required>
+          </div>
+          <div class="form-group">
+            <label class="fp-label">Interest Rate (%)</label>
+            <input type="number" name="interest_rate" id="editInterestRate" class="fp-input" step="0.01" value="0">
+          </div>
+          <div class="form-group">
+            <label class="fp-label">Start Date</label>
+            <input type="date" name="start_date" id="editStartDate" class="fp-input" required>
+          </div>
+          <div class="form-group" id="editEndDateField">
+            <label class="fp-label">End Date</label>
+            <input type="date" name="end_date" id="editEndDate" class="fp-input">
+          </div>
+          <div class="form-group form-group-checkbox">
+            <label class="fp-checkbox-label">
+              <input type="checkbox" name="is_long_term" id="editIsLongTerm">
+              Long Term Liability (EMI / Loan)
+            </label>
+          </div>
+          <div class="form-group form-group-checkbox">
+            <label class="fp-checkbox-label">
+              <input type="checkbox" name="is_active" id="editIsActive" checked>
+              Active
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-ghost" onclick="closeModal('editLiabilityModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-overlay" id="deleteLiabilityModal">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <h3>Delete Liability</h3>
+      <button class="modal-close" onclick="closeModal('deleteLiabilityModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <p>Are you sure you want to delete "<span id="deleteLiabilityName"></span>"?</p>
+      <p class="text-muted" style="font-size:0.875rem">This action cannot be undone.</p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-ghost" onclick="closeModal('deleteLiabilityModal')">Cancel</button>
+      <form method="post" id="deleteLiabilityForm" style="display:inline">
+        {% csrf_token %}
+        <button type="submit" class="btn-danger">Delete Liability</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+// Toggle long-term fields for Add Modal
+const ltCheck = document.getElementById('id_is_long_term');
+const ltFields = ['field-interest_rate', 'field-end_date'];
+
+function toggleLongTerm() {
+  const show = ltCheck && ltCheck.checked;
+  ltFields.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = show ? '' : 'none';
+  });
+}
+
+if (ltCheck) {
+  ltCheck.addEventListener('change', toggleLongTerm);
+  toggleLongTerm();
+}
+
+// Edit Liability
+function editLiability(liabilityId) {
+  fetch(`/api/liabilities/${liabilityId}/`)
+    .then(response => response.json())
+    .then(data => {
+      const editForm = document.getElementById('editLiabilityForm');
+      editForm.action = `/liabilities/${liabilityId}/edit/`;
+      
+      document.getElementById('editName').value = data.name;
+      document.getElementById('editLiabilityType').value = data.liability_type;
+      document.getElementById('editPrincipal').value = data.principal;
+      document.getElementById('editInterestRate').value = data.interest_rate || 0;
+      document.getElementById('editStartDate').value = data.start_date;
+      document.getElementById('editEndDate').value = data.end_date || '';
+      document.getElementById('editIsLongTerm').checked = data.is_long_term;
+      document.getElementById('editIsActive').checked = data.is_active;
+      
+      // Show/hide end date field based on is_long_term
+      const endDateField = document.getElementById('editEndDateField');
+      if (endDateField) {
+        endDateField.style.display = data.is_long_term ? '' : 'none';
+      }
+      
+      openModal('editLiabilityModal');
+    })
+    .catch(error => {
+      console.error('Error fetching liability:', error);
+      alert('Error loading liability data. Please try again.');
+    });
+}
+
+// Delete Liability
+function deleteLiability(liabilityId, liabilityName) {
+  document.getElementById('deleteLiabilityName').innerText = liabilityName;
+  const deleteForm = document.getElementById('deleteLiabilityForm');
+  deleteForm.action = `/liabilities/${liabilityId}/delete/`;
+  openModal('deleteLiabilityModal');
+}
+
+// Toggle long-term fields in Edit Modal
+const editIsLongTerm = document.getElementById('editIsLongTerm');
+function toggleEditLongTerm() {
+  const show = editIsLongTerm && editIsLongTerm.checked;
+  const endDateField = document.getElementById('editEndDateField');
+  if (endDateField) {
+    endDateField.style.display = show ? '' : 'none';
+  }
+}
+
+if (editIsLongTerm) {
+  editIsLongTerm.addEventListener('change', toggleEditLongTerm);
+}
+
+// Modal functions
+function openModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.style.display = 'flex';
+  }
+}
+
+function closeModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.style.display = 'none';
+  }
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+  if (event.target.classList.contains('modal-overlay')) {
+    event.target.style.display = 'none';
+  }
+}
+
+// Make currency available to JS
+const CURRENCY = "{{ currency }}";
+</script>
+{% endblock %}

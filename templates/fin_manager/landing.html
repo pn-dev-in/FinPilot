@@ -1,0 +1,879 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinPilot — AI-Powered Personal Finance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="{% static 'css/main.css' %}">
+
+  <!-- Favicon -->
+<link rel="icon"
+      type="image/x-icon"
+      href="{% static 'favicon/favicon.ico' %}">
+
+<link rel="icon"
+      type="image/png"
+      sizes="96x96"
+      href="{% static 'favicon/favicon-96x96.png' %}">
+
+<link rel="icon"
+      type="image/svg+xml"
+      href="{% static 'favicon/favicon.svg' %}">
+
+<link rel="apple-touch-icon"
+      sizes="180x180"
+      href="{% static 'favicon/apple-touch-icon.png' %}">
+
+<link rel="manifest"
+      href="{% static 'favicon/site.webmanifest' %}">
+  
+  <!-- Dark Mode Detection Script -->
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('finpilot_theme');
+      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      
+      if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      } else {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  
+  <style>
+    /* Dark Mode CSS Variables */
+    :root {
+      --landing-bg: #ffffff;
+      --landing-surface: #f8f9fa;
+      --landing-text: #1a1a2e;
+      --landing-text-muted: #6c757d;
+      --landing-border: #e9ecef;
+      --landing-card-bg: #ffffff;
+      --landing-nav-bg: rgba(255, 255, 255, 0.98);
+      --landing-footer-bg: #f8f9fa;
+      --hero-gradient-start: #f0fdf4;
+      --hero-gradient-end: #e0f2fe;
+      --primary: #1D9E75;
+      --primary-hover: #16835c;
+    }
+    
+    [data-theme="dark"] {
+      --landing-bg: #0a0a0f;
+      --landing-surface: #14141a;
+      --landing-text: #e5e7eb;
+      --landing-text-muted: #9ca3af;
+      --landing-border: #2a2a32;
+      --landing-card-bg: #1a1a24;
+      --landing-nav-bg: rgba(10, 10, 15, 0.98);
+      --landing-footer-bg: #14141a;
+      --hero-gradient-start: #0a1a0f;
+      --hero-gradient-end: #0a121a;
+      --primary: #2EBD8C;
+      --primary-hover: #26a378;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
+      background: var(--landing-bg);
+      color: var(--landing-text);
+      transition: background-color 0.3s ease, color 0.3s ease;
+      line-height: 1.5;
+    }
+    
+    /* Navigation */
+    .landing-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: var(--landing-nav-bg);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--landing-border);
+      padding: 1rem 2rem;
+      z-index: 1000;
+    }
+    
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--primary);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .logo-icon svg {
+      width: 18px;
+      height: 18px;
+      color: white;
+    }
+    
+    .logo-text {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--landing-text);
+    }
+    
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    
+    .theme-toggle {
+      background: var(--landing-surface);
+      border: 1px solid var(--landing-border);
+      border-radius: 2rem;
+      width: 38px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: var(--landing-text);
+    }
+    
+    .theme-toggle:hover {
+      background: var(--primary);
+      color: white;
+      transform: scale(1.05);
+    }
+    
+    .btn-ghost {
+      background: transparent;
+      color: var(--landing-text);
+      border: 1px solid var(--landing-border);
+      padding: 0.5rem 1.25rem;
+      border-radius: 0.5rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .btn-ghost:hover {
+      background: var(--landing-surface);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.5rem 1.25rem;
+      border-radius: 0.5rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(29, 158, 117, 0.3);
+    }
+    
+    .btn-lg {
+      padding: 0.75rem 2rem;
+      font-size: 1rem;
+    }
+    
+    /* Hero Section */
+    .hero-section {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      background: linear-gradient(135deg, var(--hero-gradient-start) 0%, var(--hero-gradient-end) 100%);
+      padding: 6rem 2rem 4rem;
+    }
+    
+    .hero-content {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    .hero-badge {
+      display: inline-block;
+      background: rgba(29, 158, 117, 0.1);
+      color: var(--primary);
+      padding: 0.5rem 1rem;
+      border-radius: 2rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-bottom: 2rem;
+    }
+    
+    .hero-headline {
+      font-size: 3.5rem;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 1.5rem;
+      color: var(--landing-text);
+    }
+    
+    .hero-sub {
+      font-size: 1.125rem;
+      color: var(--landing-text-muted);
+      margin-bottom: 2rem;
+      line-height: 1.6;
+    }
+    
+    .hero-cta {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-bottom: 3rem;
+    }
+    
+    .hero-stats {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--landing-border);
+    }
+    
+    .stat {
+      text-align: center;
+    }
+    
+    .stat-val {
+      display: block;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--landing-text);
+      margin-bottom: 0.25rem;
+    }
+    
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--landing-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    /* Features Section */
+    .features-section {
+      padding: 5rem 2rem;
+      background: var(--landing-bg);
+    }
+    
+    .features-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .section-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+    
+    .section-header h2 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+    
+    .section-header p {
+      color: var(--landing-text-muted);
+      font-size: 1.1rem;
+    }
+    
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 2rem;
+    }
+    
+    .feature-card {
+      background: var(--landing-card-bg);
+      border: 1px solid var(--landing-border);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      transition: all 0.3s;
+    }
+    
+    .feature-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+      border-color: var(--primary);
+    }
+    
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+    }
+    
+    .feature-card h3 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--landing-text);
+    }
+    
+    .feature-card p {
+      color: var(--landing-text-muted);
+      line-height: 1.5;
+      font-size: 0.9rem;
+    }
+    
+    /* Footer */
+    .landing-footer {
+      background: var(--landing-footer-bg);
+      border-top: 1px solid var(--landing-border);
+      padding: 3rem 2rem;
+      text-align: center;
+    }
+    
+    .footer-content {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .footer-links {
+      display: flex;
+      gap: 2rem;
+      justify-content: center;
+      margin-top: 1rem;
+    }
+    
+    .footer-links a {
+      color: var(--landing-text-muted);
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: color 0.2s;
+    }
+    
+    .footer-links a:hover {
+      color: var(--primary);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero-headline {
+        font-size: 2rem;
+      }
+      
+      .hero-sub {
+        font-size: 1rem;
+      }
+      
+      .hero-cta {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .hero-stats {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: center;
+      }
+      
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .nav-actions {
+        gap: 0.5rem;
+      }
+      
+      .btn-ghost, .btn-primary {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+      }
+
+      .btn-ghost {
+    background: transparent;
+    color: var(--landing-text, #ffffff);
+    border: 1px solid var(--landing-border, #2a2a32);
+    padding: 0.5rem 1.25rem;
+    border-radius: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-ghost:hover {
+    background: var(--landing-surface, #2a2a32);
+    border-color: var(--primary, #2EBD8C);
+    color: var(--primary, #2EBD8C);
+}
+
+.btn-primary {
+    background: var(--primary, #1D9E75);
+    color: #ffffff;
+    border: none;
+    padding: 0.5rem 1.25rem;
+    border-radius: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-primary:hover {
+    background: var(--primary-hover, #16835c);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(29, 158, 117, 0.3);
+    color: #ffffff;
+}
+
+/* Ensure text is visible in dark mode for all buttons */
+[data-theme="dark"] .btn-ghost {
+    color: #e5e7eb;
+    border-color: #3a3a42;
+}
+
+[data-theme="dark"] .btn-ghost:hover {
+    color: #2EBD8C;
+    background: rgba(46, 189, 140, 0.1);
+}
+
+[data-theme="dark"] .btn-primary {
+    background: #2EBD8C;
+    color: #ffffff;
+}
+
+[data-theme="dark"] .btn-primary:hover {
+    background: #26a378;
+    color: #ffffff;
+}
+
+/* Theme toggle button styles */
+.theme-toggle-landing {
+    background: var(--landing-surface, #f0f0f0);
+    border: 1px solid var(--landing-border, #e0e0e0);
+    border-radius: 2rem;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--landing-text, #333);
+}
+
+[data-theme="dark"] .theme-toggle-landing {
+    background: #2a2a32;
+    border-color: #3a3a42;
+    color: #e5e7eb;
+}
+
+.theme-toggle-landing:hover {
+    background: var(--primary, #1D9E75);
+    color: white;
+    transform: scale(1.05);
+}
+
+/* Navigation actions container */
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Ensure the nav container has proper background */
+.landing-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: var(--landing-nav-bg, rgba(255, 255, 255, 0.98));
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--landing-border, #e9ecef);
+    padding: 1rem 2rem;
+    z-index: 1000;
+}
+
+[data-theme="dark"] .landing-nav {
+    background: rgba(10, 10, 15, 0.98);
+    border-bottom-color: #2a2a32;
+}
+
+/* Theme Toggle Button Styles - Matching Dashboard */
+.theme-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--landing-text);
+    transition: all 0.2s ease;
+}
+
+.theme-toggle:hover {
+    background: var(--landing-surface);
+    transform: scale(1.05);
+}
+
+.theme-toggle svg {
+    display: block;
+}
+
+/* Button Styles for Landing Page */
+.btn-ghost {
+    background: transparent;
+    color: var(--landing-text);
+    border: 1px solid var(--landing-border);
+    padding: 0.5rem 1.25rem;
+    border-radius: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-ghost:hover {
+    background: var(--landing-surface);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 0.5rem 1.25rem;
+    border-radius: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-primary:hover {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(29, 158, 117, 0.3);
+}
+
+/* Dark mode specific styles */
+[data-theme="dark"] .theme-toggle {
+    color: #e5e7eb;
+}
+
+[data-theme="dark"] .theme-toggle:hover {
+    background: #2a2a32;
+}
+
+[data-theme="dark"] .btn-ghost {
+    color: #e5e7eb;
+    border-color: #3a3a42;
+}
+
+[data-theme="dark"] .btn-ghost:hover {
+    color: #2EBD8C;
+    background: rgba(46, 189, 140, 0.1);
+}
+
+[data-theme="dark"] .btn-primary {
+    background: #2EBD8C;
+    color: white;
+}
+
+[data-theme="dark"] .btn-primary:hover {
+    background: #26a378;
+}
+    }
+  </style>
+</head>
+<body>
+  <nav class="landing-nav">
+    <div class="nav-container">
+        <div class="logo">
+            <div class="logo-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                </svg>
+            </div>
+            <span class="logo-text">FinPilot</span>
+        </div>
+        <div class="nav-actions">
+            <!-- Theme Toggle Button - Same as dashboard -->
+            <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+                <svg id="sunIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="5"/>
+                    <line x1="12" y1="1" x2="12" y2="3"/>
+                    <line x1="12" y1="21" x2="12" y2="23"/>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                    <line x1="1" y1="12" x2="3" y2="12"/>
+                    <line x1="21" y1="12" x2="23" y2="12"/>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                </svg>
+                <svg id="moonIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                </svg>
+            </button>
+            <a href="{% url 'login' %}" class="btn-ghost">Sign in</a>
+            <a href="{% url 'register' %}" class="btn-primary">Get started free</a>
+        </div>
+    </div>
+</nav>
+
+  <section class="hero-section">
+    <div class="hero-content">
+      <div class="hero-badge">✦ AI-Powered Finance Platform</div>
+      <h1 class="hero-headline">Your co-pilot<br>for smarter finances</h1>
+      <p class="hero-sub">Track every rupee, set budgets, get AI-driven insights, and reach your savings goals — all in one beautifully designed platform.</p>
+      <div class="hero-cta">
+        <a href="{% url 'register' %}" class="btn-primary btn-lg">Start for free →</a>
+        <a href="{% url 'login' %}" class="btn-ghost btn-lg">Sign in</a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat">
+          <span class="stat-val">AI</span>
+          <span class="stat-label">INSIGHTS</span>
+        </div>
+        <div class="stat">
+          <span class="stat-val">₹</span>
+          <span class="stat-label">MULTI-CURRENCY</span>
+        </div>
+        <div class="stat">
+          <span class="stat-val">100%</span>
+          <span class="stat-label">PRIVATE & SECURE</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="features-section">
+    <div class="features-container">
+      <div class="section-header">
+        <h2>Everything you need to master your money</h2>
+        <p>Powerful features to help you take control of your financial future</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon" style="background:#E1F5EE;color:#1D9E75">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+            </svg>
+          </div>
+          <h3>AI Financial Insights</h3>
+          <p>Groq AI analyses your spending patterns and delivers personalised insights, anomaly alerts, and saving suggestions every week.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:#E6F1FB;color:#185FA5">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="1" y="4" width="22" height="16" rx="2"/>
+              <line x1="1" y1="10" x2="23" y2="10"/>
+            </svg>
+          </div>
+          <h3>Smart Budget Tracking</h3>
+          <p>Set monthly budget limits per category and get real-time alerts before you overspend. Visual progress bars keep you on track.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:#FAEEDA;color:#BA7517">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <circle cx="12" cy="12" r="10"/>
+              <circle cx="12" cy="12" r="6"/>
+              <circle cx="12" cy="12" r="2"/>
+            </svg>
+          </div>
+          <h3>Savings Goals</h3>
+          <p>Define goals with deadlines, track progress, and see exactly how much you need to save monthly to hit your target.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:#FCEBEB;color:#A32D2D">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <line x1="18" y1="20" x2="18" y2="10"/>
+              <line x1="12" y1="20" x2="12" y2="4"/>
+              <line x1="6" y1="20" x2="6" y2="14"/>
+            </svg>
+          </div>
+          <h3>Financial Health Score</h3>
+          <p>A single 0–100 score calculated from your savings rate, expense ratio, and EMI burden. Know your financial fitness at a glance.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:#F3F1FE;color:#7F77DD">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+            </svg>
+          </div>
+          <h3>Recurring Transactions</h3>
+          <p>Set up rules for salary, rent, subscriptions and let FinPilot auto-create them on schedule. Never miss a recurring entry again.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:#E1F5EE;color:#085041">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </div>
+          <h3>Secure & Private</h3>
+          <p>JWT auth, CSRF protection, per-user data isolation, and environment-based secrets. Production-grade security from day one.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="landing-footer">
+    <div class="footer-content">
+      <div class="logo" style="justify-content: center;">
+        <div class="logo-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <span class="logo-text">FinPilot</span>
+      </div>
+      <p style="color: var(--landing-text-muted); font-size: 0.85rem; margin-top: 1rem;">AI-powered personal finance management platform.</p>
+      <div class="footer-links">
+        <a href="{% url 'register' %}">Sign up</a>
+        <a href="/api/docs/">API Docs</a>
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Service</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Dark Mode JavaScript -->
+  <script>
+    const themeToggle = document.getElementById('themeToggle');
+    const sunIcon = document.getElementById('sunIcon');
+    const moonIcon = document.getElementById('moonIcon');
+    
+    function updateThemeIcons() {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      if (currentTheme === 'dark') {
+        if (sunIcon) sunIcon.style.display = 'block';
+        if (moonIcon) moonIcon.style.display = 'none';
+      } else {
+        if (sunIcon) sunIcon.style.display = 'none';
+        if (moonIcon) moonIcon.style.display = 'block';
+      }
+    }
+    
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('finpilot_theme', theme);
+      updateThemeIcons();
+    }
+    
+    function toggleTheme() {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      setTheme(newTheme);
+    }
+    
+    if (themeToggle) {
+      themeToggle.addEventListener('click', toggleTheme);
+    }
+    
+    updateThemeIcons();
+    
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+      const savedTheme = localStorage.getItem('finpilot_theme');
+      if (!savedTheme) {
+        setTheme(e.matches ? 'dark' : 'light');
+      }
+    });
+
+    (function() {
+    const savedTheme = localStorage.getItem('finpilot_theme');
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const sunIcon = document.getElementById('sunIconLanding');
+    const moonIcon = document.getElementById('moonIconLanding');
+    
+    // Set initial theme
+    let initialTheme = savedTheme;
+    if (!initialTheme) {
+        initialTheme = systemPrefersDark ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', initialTheme);
+    
+    // Update icon visibility
+    function updateIcons() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        if (currentTheme === 'dark') {
+            if (sunIcon) sunIcon.style.display = 'block';
+            if (moonIcon) moonIcon.style.display = 'none';
+        } else {
+            if (sunIcon) sunIcon.style.display = 'none';
+            if (moonIcon) moonIcon.style.display = 'block';
+        }
+    }
+    
+    updateIcons();
+    
+    // Theme toggle functionality
+    const themeToggle = document.getElementById('themeToggleLanding');
+    if (themeToggle) {
+        themeToggle.addEventListener('click', function() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('finpilot_theme', newTheme);
+            updateIcons();
+        });
+    }
+})();
+  </script>
+</body>
+</html>

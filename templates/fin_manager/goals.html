@@ -1,0 +1,456 @@
+{% extends "fin_manager/base.html" %}
+{% load static %}
+
+{% block title %}Savings Goals{% endblock %}
+{% block page_title %}Savings Goals{% endblock %}
+
+{% block topbar_actions %}
+<button class="btn-primary btn-sm" onclick="openModal('addGoalModal')">+ New Goal</button>
+{% endblock %}
+
+{% block content %}
+<div class="page-content">
+
+  <!-- KPI Strip -->
+  <div class="kpi-strip kpi-strip-sm">
+    <div class="kpi-card">
+      <div class="kpi-label">Overall Progress</div>
+      <div class="kpi-value" style="color:{% if overall_progress >= 80 %}#1D9E75{% elif overall_progress >= 50 %}#378ADD{% else %}#BA7517{% endif %}">
+        {{ overall_progress|floatformat:1 }}%
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Total Saved</div>
+      <div class="kpi-value kpi-income">{{ currency }}{{ total_saved|floatformat:0 }}</div>
+      <div class="kpi-sub">Target: {{ currency }}{{ total_target|floatformat:0 }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Active Goals</div>
+      <div class="kpi-value">{{ active_goals_count }}</div>
+      <div class="kpi-sub">{{ completed_goals_count }} completed</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Upcoming Deadlines</div>
+      <div class="kpi-value" style="color:{% if upcoming_deadlines > 0 %}#D85A30{% else %}#1D9E75{% endif %}">
+        {{ upcoming_deadlines }}
+      </div>
+      <div class="kpi-sub">Due in next 30 days</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs-container">
+    <button class="tab-btn {% if active_tab == 'active' %}active{% endif %}" data-tab="active" onclick="switchGoalTab('active')">
+      Active Goals
+      {% if active_goals_count > 0 %}
+      <span class="tab-badge">{{ active_goals_count }}</span>
+      {% endif %}
+    </button>
+    <button class="tab-btn {% if active_tab == 'completed' %}active{% endif %}" data-tab="completed" onclick="switchGoalTab('completed')">
+      Completed
+      {% if completed_goals_count > 0 %}
+      <span class="tab-badge">{{ completed_goals_count }}</span>
+      {% endif %}
+    </button>
+  </div>
+
+  <!-- Active Goals Tab -->
+  <div id="activeGoalsTab" class="tab-content" style="display: {% if active_tab == 'active' %}block{% else %}none{% endif %};">
+    {% if active_goals %}
+    <div class="goals-grid">
+      {% for goal in active_goals %}
+      <div class="goal-card">
+        <div class="goal-card-header">
+          <div class="goal-icon-wrap" style="background:{{ goal.color }}20">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{ goal.color }}" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <circle cx="12" cy="12" r="6"/>
+              <circle cx="12" cy="12" r="2"/>
+            </svg>
+          </div>
+          <div class="goal-info">
+            <div class="goal-card-name">{{ goal.name }}</div>
+            <div class="goal-priority priority-{{ goal.priority|lower }}">{{ goal.priority }}</div>
+          </div>
+          <div class="goal-actions">
+            <button class="icon-btn" onclick="editGoal('{{ goal.id }}')" title="Edit">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 3l4 4-9 9-4 1 1-4 9-9z"/>
+              </svg>
+            </button>
+            <button class="icon-btn icon-btn-danger" onclick="deleteGoal('{{ goal.id }}', '{{ goal.name|escapejs }}')" title="Delete">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="goal-amounts-row">
+          <div class="goal-amount">
+            <span class="goal-amount-label">Saved</span>
+            <span class="goal-amount-value">{{ currency }}{{ goal.current_amount|floatformat:0 }}</span>
+          </div>
+          <div class="goal-amount">
+            <span class="goal-amount-label">Target</span>
+            <span class="goal-amount-value">{{ currency }}{{ goal.target_amount|floatformat:0 }}</span>
+          </div>
+          <div class="goal-amount">
+            <span class="goal-amount-label">Remaining</span>
+            <span class="goal-amount-value">{{ currency }}{{ goal.remaining_amount|floatformat:0 }}</span>
+          </div>
+        </div>
+
+        <div class="goal-progress-section">
+          <div class="goal-bar-bg goal-bar-lg">
+            <div class="goal-bar-fill" style="width:{{ goal.percent_complete }}%;background:{{ goal.color }}"></div>
+          </div>
+          <div class="goal-stats-row">
+            <span class="goal-percent">{{ goal.percent_complete }}% complete</span>
+            {% if goal.deadline %}
+            <span class="goal-deadline">{{ goal.deadline|date:"M d, Y" }}</span>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if goal.monthly_required and not goal.is_completed %}
+        <div class="goal-monthly-req">
+          💡 Save {{ currency }}{{ goal.monthly_required|floatformat:0 }}/month to reach your goal by deadline.
+        </div>
+        {% endif %}
+
+        <div class="goal-add-funds">
+          <form method="post" action="{% url 'web-goal-add-funds' goal.id %}" class="add-funds-form" onsubmit="return validateAddFunds(this)">
+            {% csrf_token %}
+            <input type="hidden" name="tab" value="{{ active_tab }}">
+            <input type="number" name="amount" class="fp-input fp-input-sm" placeholder="Add {{ currency }}" step="0.01" min="0.01" required style="flex:1">
+            <button type="submit" class="btn-primary btn-sm">Add Funds</button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-card">
+      <div class="empty-icon">🎯</div>
+      <h3>No active goals</h3>
+      <p>Create a savings goal to start tracking your progress.</p>
+      <button class="btn-primary" onclick="openModal('addGoalModal')">Create your first goal →</button>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Completed Goals Tab -->
+  <div id="completedGoalsTab" class="tab-content" style="display: {% if active_tab == 'completed' %}block{% else %}none{% endif %};">
+    {% if completed_goals %}
+    <div class="goals-grid">
+      {% for goal in completed_goals %}
+      <div class="goal-card goal-complete">
+        <div class="goal-card-header">
+          <div class="goal-icon-wrap" style="background:{{ goal.color }}20">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{ goal.color }}" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <circle cx="12" cy="12" r="6"/>
+              <circle cx="12" cy="12" r="2"/>
+            </svg>
+          </div>
+          <div class="goal-info">
+            <div class="goal-card-name">{{ goal.name }}</div>
+          </div>
+          <div class="goal-actions">
+            <button class="icon-btn" onclick="editGoal('{{ goal.id }}')" title="Edit">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 3l4 4-9 9-4 1 1-4 9-9z"/>
+              </svg>
+            </button>
+            <button class="icon-btn icon-btn-danger" onclick="deleteGoal('{{ goal.id }}', '{{ goal.name|escapejs }}')" title="Delete">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="goal-amounts-row">
+          <div class="goal-amount">
+            <span class="goal-amount-label">Saved</span>
+            <span class="goal-amount-value">{{ currency }}{{ goal.current_amount|floatformat:0 }}</span>
+          </div>
+          <div class="goal-amount">
+            <span class="goal-amount-label">Target</span>
+            <span class="goal-amount-value">{{ currency }}{{ goal.target_amount|floatformat:0 }}</span>
+          </div>
+        </div>
+
+        <div class="goal-progress-section">
+          <div class="goal-bar-bg goal-bar-lg">
+            <div class="goal-bar-fill" style="width:100%;background:{{ goal.color }}"></div>
+          </div>
+          <div class="goal-stats-row">
+            <span class="goal-percent">100% complete</span>
+            <span class="goal-completed-badge">✓ Goal Achieved!</span>
+          </div>
+        </div>
+        
+        {% if goal.completed_date %}
+        <div class="goal-completed-date">
+          Completed on {{ goal.completed_date|date:"M d, Y" }}
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-card">
+      <div class="empty-icon">🏆</div>
+      <h3>No completed goals yet</h3>
+      <p>Start saving and celebrate when you reach your targets!</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Add Goal Modal -->
+<div class="modal-overlay" id="addGoalModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>New Savings Goal</h3>
+      <button class="modal-close" onclick="closeModal('addGoalModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <form method="post" action="{% url 'goals' %}">
+        {% csrf_token %}
+        <input type="hidden" name="tab" value="{{ active_tab }}">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="fp-label">Goal Name</label>
+            <input type="text" name="name" class="fp-input" required>
+          </div>
+          <div class="form-group">
+            <label class="fp-label">Target Amount ({{ currency }})</label>
+            <input type="number" name="target_amount" class="fp-input" step="0.01" required>
+          </div>
+          <div class="form-group">
+            <label class="fp-label">Current Amount ({{ currency }})</label>
+            <input type="number" name="current_amount" class="fp-input" step="0.01" value="0">
+          </div>
+          <div class="form-group">
+            <label class="fp-label">Priority</label>
+            <select name="priority" class="fp-input">
+              <option value="High">High</option>
+              <option value="Medium" selected>Medium</option>
+              <option value="Low">Low</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="fp-label">Deadline (optional)</label>
+            <input type="date" name="deadline" class="fp-input">
+          </div>
+          <div class="form-group">
+            <label class="fp-label">Color</label>
+            <input type="color" name="color" class="fp-input" value="#1D9E75">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-ghost" onclick="closeModal('addGoalModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Create Goal</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Goal Modal -->
+<div class="modal-overlay" id="editGoalModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Edit Savings Goal</h3>
+      <button class="modal-close" onclick="closeModal('editGoalModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <form method="post" id="editGoalForm">
+        {% csrf_token %}
+        <input type="hidden" name="tab" id="editTabValue">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="fp-label">Goal Name</label>
+            <input type="text" name="name" id="editGoalName" class="fp-input" required>
+          </div>
+          <div class="form-group">
+            <label class="fp-label">Target Amount ({{ currency }})</label>
+            <input type="number" name="target_amount" id="editTargetAmount" class="fp-input" step="0.01" required>
+          </div>
+          <div class="form-group">
+            <label class="fp-label">Current Amount ({{ currency }})</label>
+            <input type="number" name="current_amount" id="editCurrentAmount" class="fp-input" step="0.01">
+          </div>
+          <div class="form-group">
+            <label class="fp-label">Priority</label>
+            <select name="priority" id="editPriority" class="fp-input">
+              <option value="High">High</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="fp-label">Deadline</label>
+            <input type="date" name="deadline" id="editDeadline" class="fp-input">
+          </div>
+          <div class="form-group">
+            <label class="fp-label">Color</label>
+            <input type="color" name="color" id="editColor" class="fp-input">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-ghost" onclick="closeModal('editGoalModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-overlay" id="deleteGoalModal">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <h3>Delete Goal</h3>
+      <button class="modal-close" onclick="closeModal('deleteGoalModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <p>Are you sure you want to delete "<span id="deleteGoalName"></span>"?</p>
+      <p class="text-muted" style="font-size:0.875rem">This action cannot be undone.</p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-ghost" onclick="closeModal('deleteGoalModal')">Cancel</button>
+      <form method="post" id="deleteGoalForm" style="display:inline">
+        {% csrf_token %}
+        <input type="hidden" name="tab" id="deleteTabValue">
+        <button type="submit" class="btn-danger">Delete Goal</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+// Get current tab from URL or default to 'active'
+let currentTab = '{{ active_tab }}';
+
+// Tab switching function
+function switchGoalTab(tab) {
+  const activeTabDiv = document.getElementById('activeGoalsTab');
+  const completedTabDiv = document.getElementById('completedGoalsTab');
+  const activeBtn = document.querySelector('.tab-btn[data-tab="active"]');
+  const completedBtn = document.querySelector('.tab-btn[data-tab="completed"]');
+  
+  if (tab === 'active') {
+    activeTabDiv.style.display = 'block';
+    completedTabDiv.style.display = 'none';
+    if (activeBtn) activeBtn.classList.add('active');
+    if (completedBtn) completedBtn.classList.remove('active');
+    currentTab = 'active';
+    // Update URL without reload
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', 'active');
+    window.history.pushState({}, '', url);
+  } else {
+    activeTabDiv.style.display = 'none';
+    completedTabDiv.style.display = 'block';
+    if (activeBtn) activeBtn.classList.remove('active');
+    if (completedBtn) completedBtn.classList.add('active');
+    currentTab = 'completed';
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', 'completed');
+    window.history.pushState({}, '', url);
+  }
+}
+
+// Edit Goal - FIXED: Uses correct edit URL, not API
+function editGoal(goalId) {
+  // Fetch goal data from API
+  fetch(`/api/goals/${goalId}/`)
+    .then(response => response.json())
+    .then(data => {
+      // Set the form action to the correct edit URL (not API)
+      const editForm = document.getElementById('editGoalForm');
+      editForm.action = `/goals/${goalId}/edit/?tab=${currentTab}`;
+      
+      // Set the tab value
+      document.getElementById('editTabValue').value = currentTab;
+      
+      // Fill form fields
+      document.getElementById('editGoalName').value = data.name;
+      document.getElementById('editTargetAmount').value = data.target_amount;
+      document.getElementById('editCurrentAmount').value = data.current_amount;
+      document.getElementById('editPriority').value = data.priority || 'Medium';
+      document.getElementById('editDeadline').value = data.deadline || '';
+      document.getElementById('editColor').value = data.color || '#1D9E75';
+      
+      // Open the modal
+      openModal('editGoalModal');
+    })
+    .catch(error => {
+      console.error('Error fetching goal:', error);
+      alert('Error loading goal data. Please try again.');
+    });
+}
+
+// Delete Goal - FIXED: Uses correct delete URL
+function deleteGoal(goalId, goalName) {
+  document.getElementById('deleteGoalName').innerText = goalName;
+  const deleteForm = document.getElementById('deleteGoalForm');
+  deleteForm.action = `/goals/${goalId}/delete/?tab=${currentTab}`;
+  document.getElementById('deleteTabValue').value = currentTab;
+  openModal('deleteGoalModal');
+}
+
+// Validate Add Funds
+function validateAddFunds(form) {
+  const amount = form.querySelector('input[name="amount"]').value;
+  if (!amount || parseFloat(amount) <= 0) {
+    alert('Please enter a valid amount greater than 0');
+    return false;
+  }
+  return confirm(`Add {{ currency }}${amount} to this goal?`);
+}
+
+// Modal functions
+function openModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.style.display = 'flex';
+  }
+}
+
+function closeModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.style.display = 'none';
+  }
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+  if (event.target.classList.contains('modal-overlay')) {
+    event.target.style.display = 'none';
+  }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+  // Make sure tabs are in correct state based on URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const tabFromUrl = urlParams.get('tab');
+  if (tabFromUrl === 'completed') {
+    switchGoalTab('completed');
+  } else if (tabFromUrl === 'active') {
+    switchGoalTab('active');
+  }
+});
+
+// Make currency available to JS
+const CURRENCY = "{{ currency }}";
+</script>
+{% endblock %}

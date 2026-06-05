@@ -1,0 +1,218 @@
+{% extends "fin_manager/base.html" %}
+{% load static %}
+
+{% block title %}Transactions{% endblock %}
+{% block page_title %}Transactions{% endblock %}
+
+{% block topbar_actions %}
+<button class="btn-primary btn-sm" onclick="openModal('addTxModal')">+ Add Transaction</button>
+{% endblock %}
+
+{% block content %}
+<div class="page-content">
+
+  <!-- Summary strip -->
+  <div class="kpi-strip kpi-strip-sm">
+    <div class="kpi-card">
+      <div class="kpi-label">Total Income</div>
+      <div class="kpi-value kpi-income">{{ currency }}{{ total_income|floatformat:0 }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Total Expense</div>
+      <div class="kpi-value kpi-expense">{{ currency }}{{ total_expense|floatformat:0 }}</div>
+    </div>
+    <div class="kpi-card">
+  <div class="kpi-label">Net</div>
+  <div class="kpi-value {% if net_amount >= 0 %}kpi-income{% else %}kpi-expense{% endif %}">
+    {{ currency }}{{ net_amount|floatformat:0 }}
+  </div>
+</div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filter-bar">
+    <form method="get" class="filter-form">
+      <select name="type" class="fp-input fp-input-sm" onchange="this.form.submit()">
+        <option value="">All types</option>
+        <option value="income" {% if request.GET.type == 'income' %}selected{% endif %}>Income</option>
+        <option value="expense" {% if request.GET.type == 'expense' %}selected{% endif %}>Expense</option>
+      </select>
+      <select name="category" class="fp-input fp-input-sm" onchange="this.form.submit()">
+        <option value="">All categories</option>
+        {% for cat in categories %}
+        <option value="{{ cat.id }}" {% if request.GET.category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
+        {% endfor %}
+      </select>
+      <input type="month" name="month" class="fp-input fp-input-sm" value="{{ request.GET.month }}" onchange="this.form.submit()">
+      {% if request.GET.type or request.GET.category or request.GET.month %}
+      <a href="{% url 'transactions' %}" class="btn-ghost btn-sm">Clear</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <!-- Transaction table -->
+  <div class="dash-card full-width">
+    {% if transactions %}
+    <div class="tx-table-wrap">
+      <table class="tx-table">
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th>Category</th>
+            <th>Account</th>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Amount</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for tx in transactions %}
+          <tr>
+            <td>
+              <span class="tx-desc">{{ tx.description }}</span>
+              {% if tx.is_recurring %}<span class="tx-badge">↺ recurring</span>{% endif %}
+              {% if tx.ai_categorised %}<span class="tx-badge tx-badge-ai">AI</span>{% endif %}
+            </td>
+            <td>
+              {% if tx.category %}
+              <span class="cat-tag" style="background:{{ tx.category.color }}20;color:{{ tx.category.color }}">
+                {{ tx.category.name }}
+              </span>
+              {% else %}—{% endif %}
+            </td>
+            <td class="tx-date">{{ tx.account.name }}</td>
+            <td class="tx-date">{{ tx.date|date:"d M Y" }}</td>
+            <td>
+              <span class="type-badge type-{{ tx.transaction_type }}">{{ tx.transaction_type }}</span>
+            </td>
+            <td class="tx-amount {% if tx.transaction_type == 'income' %}amount-income{% else %}amount-expense{% endif %}">
+              {% if tx.transaction_type == 'income' %}+{% else %}−{% endif %}{{ currency }}{{ tx.amount|floatformat:2 }}
+            </td>
+            <td>
+              <form method="post" action="{% url 'delete-transaction' tx.id %}" onsubmit="return confirm('Delete this transaction?')">
+                {% csrf_token %}
+                <button type="submit" class="icon-btn icon-btn-danger" title="Delete">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      No transactions found.
+      <button onclick="openModal('addTxModal')" class="btn-ghost btn-sm" style="margin-left:.5rem">Add one →</button>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Add Transaction Modal -->
+<div class="modal-overlay" id="addTxModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Add Transaction</h3>
+      <button class="modal-close" onclick="closeModal('addTxModal')">×</button>
+    </div>
+    <div class="modal-tabs">
+      <button class="modal-tab active" onclick="switchTab(this, 'formTab')">Manual Entry</button>
+      <button class="modal-tab" onclick="switchTab(this, 'nlpTab')">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        AI Entry
+      </button>
+    </div>
+
+    <div id="formTab" class="modal-body">
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-grid">
+          {% for field in form %}
+          <div class="form-group {% if field.name == 'notes' %}form-group-full{% endif %}">
+            <label class="fp-label">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}<div class="fp-error">{{ field.errors|join:", " }}</div>{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-ghost" onclick="closeModal('addTxModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Save Transaction</button>
+        </div>
+      </form>
+    </div>
+
+    <div id="nlpTab" class="modal-body" style="display:none">
+      <p class="nlp-hint">Type naturally — FinPilot AI will parse it:</p>
+      <div class="nlp-examples">
+        <span>"Spent ₹450 on Zomato yesterday"</span>
+        <span>"Received ₹50,000 salary today"</span>
+        <span>"Paid ₹2,200 for electricity last Monday"</span>
+      </div>
+      <div class="form-group" style="margin-top:1rem">
+        <label class="fp-label">Select Account</label>
+        <select id="nlpAccount" class="fp-input">
+          {% for acc in form.account.field.queryset %}
+          <option value="{{ acc.id }}">{{ acc.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="fp-label">Describe your transaction</label>
+        <textarea id="nlpText" class="fp-input" rows="3" placeholder="e.g. Spent ₹450 on Zomato yesterday"></textarea>
+      </div>
+      <div id="nlpResult" class="nlp-result" style="display:none"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn-ghost" onclick="closeModal('addTxModal')">Cancel</button>
+        <button type="button" class="btn-primary" onclick="submitNLP()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Parse & Save
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function submitNLP() {
+  const text = document.getElementById('nlpText').value.trim();
+  const accountId = document.getElementById('nlpAccount').value;
+  const resultEl = document.getElementById('nlpResult');
+  if (!text) return;
+
+  resultEl.style.display = 'block';
+  resultEl.innerHTML = '<span class="nlp-loading">AI is parsing your transaction...</span>';
+
+  fetch('/api/ai/nlp-transaction/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken'),
+    },
+    body: JSON.stringify({ text, account_id: accountId }),
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.id) {
+      resultEl.innerHTML = '<span class="nlp-success">✓ Transaction saved: ' + data.description + ' — ₹' + data.amount + '</span>';
+      setTimeout(() => { closeModal('addTxModal'); location.reload(); }, 1500);
+    } else {
+      resultEl.innerHTML = '<span class="nlp-error">Error: ' + (data.error || 'Unknown error') + '</span>';
+    }
+  })
+  .catch(() => {
+    resultEl.innerHTML = '<span class="nlp-error">Network error. Please try again.</span>';
+  });
+}
+
+function getCookie(name) {
+  let v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+  return v ? v[2] : null;
+}
+</script>
+{% endblock %}

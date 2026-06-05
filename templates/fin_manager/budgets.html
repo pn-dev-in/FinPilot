@@ -1,0 +1,262 @@
+{% extends "fin_manager/base.html" %}
+{% load static %}
+
+{% block title %}Budgets{% endblock %}
+{% block page_title %}Budgets{% endblock %}
+
+{% block topbar_actions %}
+<button class="btn-primary btn-sm" onclick="openModal('addBudgetModal')">+ Set Budget</button>
+{% endblock %}
+
+{% block content %}
+<div class="page-content">
+
+  <!-- KPI Strip for Budget Summary -->
+  <div class="kpi-strip kpi-strip-sm">
+    <div class="kpi-card">
+      <div class="kpi-label">Total Budget</div>
+      <div class="kpi-value">{{ currency }}{{ total_budget|floatformat:0 }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Total Spent</div>
+      <div class="kpi-value kpi-expense">{{ currency }}{{ total_spent|floatformat:0 }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Remaining</div>
+      <div class="kpi-value {% if remaining_budget >= 0 %}kpi-income{% else %}kpi-expense{% endif %}">
+        {{ currency }}{{ remaining_budget|floatformat:0 }}
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Budget Health</div>
+      <div class="kpi-value" style="color:{% if budget_health <= 30 %}#1D9E75{% elif budget_health <= 70 %}#378ADD{% else %}#D85A30{% endif %}">
+        {{ budget_health|floatformat:1 }}%
+      </div>
+      <div class="kpi-sub">{{ budgets|length }} budget{% if budgets|length != 1 %}s{% endif %} set for this month</div>
+    </div>
+  </div>
+
+  <!-- Month Selector -->
+  <div class="filter-bar" style="margin-bottom: 1.5rem; justify-content: flex-end;">
+    <form method="get" class="filter-form" id="monthFilterForm">
+      <label class="fp-label" style="margin-right: 0.5rem;">Select Month:</label>
+      <input type="month" name="month" class="fp-input fp-input-sm" value="{{ month|date:'Y-m' }}" onchange="this.form.submit()">
+      {% if request.GET.month %}
+      <a href="{% url 'budgets' %}" class="btn-ghost btn-sm">Current Month</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <!-- Budget Cards Grid -->
+  {% if budgets %}
+  <div class="budget-cards-grid">
+    {% for b in budgets %}
+    <div class="budget-detail-card {% if b.is_over_budget %}card-danger{% elif b.is_near_limit %}card-warn{% endif %}">
+      <div class="budget-detail-header">
+        <div>
+          <div class="budget-detail-name">{{ b.category.name }}</div>
+          <div class="budget-detail-limit">Limit: {{ currency }}{{ b.limit_amount|floatformat:0 }}</div>
+        </div>
+        <div class="budget-actions">
+          <div class="budget-detail-pct {% if b.is_over_budget %}text-danger{% elif b.is_near_limit %}text-warn{% else %}text-success{% endif %}">
+            {{ b.percent_used }}%
+          </div>
+          <div class="budget-action-buttons">
+            <button class="icon-btn" onclick="editBudget('{{ b.id }}')" title="Edit">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 3l4 4-9 9-4 1 1-4 9-9z"/>
+              </svg>
+            </button>
+            <button class="icon-btn icon-btn-danger" onclick="deleteBudget('{{ b.id }}', '{{ b.category.name|escapejs }}')" title="Delete">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="budget-bar-bg" style="margin:1rem 0">
+        <div class="budget-bar-fill {% if b.is_over_budget %}bar-over{% elif b.is_near_limit %}bar-near{% else %}bar-ok{% endif %}"
+             style="width:{% if b.percent_used > 100 %}100{% else %}{{ b.percent_used }}{% endif %}%"></div>
+      </div>
+      <div class="budget-detail-amounts">
+        <div>
+          <div class="bda-label">Spent</div>
+          <div class="bda-val text-danger">{{ currency }}{{ b.spent|floatformat:0 }}</div>
+        </div>
+        <div>
+          <div class="bda-label">Remaining</div>
+          <div class="bda-val {% if b.remaining >= 0 %}text-success{% else %}text-danger{% endif %}">
+            {{ currency }}{{ b.remaining|floatformat:0 }}
+          </div>
+        </div>
+        <div>
+          <div class="bda-label">Alert at</div>
+          <div class="bda-val">{{ b.alert_threshold }}%</div>
+        </div>
+      </div>
+      {% if b.is_over_budget %}
+      <div class="budget-alert budget-alert-danger">⚠ Over budget by {{ currency }}{{ b.remaining|floatformat:0|cut:"-" }}</div>
+      {% elif b.is_near_limit %}
+      <div class="budget-alert budget-alert-warn">⚡ Approaching limit ({{ b.percent_used }}% used)</div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-card">
+    <div class="empty-icon">📊</div>
+    <h3>No budgets for {{ month|date:"F Y" }}</h3>
+    <p>Set spending limits per category to stay on track.</p>
+    <button class="btn-primary" onclick="openModal('addBudgetModal')">Set your first budget →</button>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Add Budget Modal -->
+<div class="modal-overlay" id="addBudgetModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Set Monthly Budget</h3>
+      <button class="modal-close" onclick="closeModal('addBudgetModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <form method="post" action="{% url 'budgets' %}">
+        {% csrf_token %}
+        <input type="hidden" name="month_val" value="{{ month|date:'Y-m-d' }}">
+        <div class="form-grid">
+          {% for field in form %}
+          <div class="form-group">
+            <label class="fp-label">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}<div class="fp-error">{{ field.errors|join:", " }}</div>{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-ghost" onclick="closeModal('addBudgetModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Save Budget</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Budget Modal -->
+<div class="modal-overlay" id="editBudgetModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Edit Budget</h3>
+      <button class="modal-close" onclick="closeModal('editBudgetModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <form method="post" id="editBudgetForm">
+        {% csrf_token %}
+        <input type="hidden" name="budget_id" id="editBudgetId">
+        <input type="hidden" name="month_val" value="{{ month|date:'Y-m-d' }}">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="fp-label">Category</label>
+            <select name="category" id="editCategory" class="fp-input" required>
+              <option value="">Select Category</option>
+              {% for cat in categories %}
+              <option value="{{ cat.id }}">{{ cat.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="fp-label">Limit Amount ({{ currency }})</label>
+            <input type="number" name="limit_amount" id="editLimitAmount" class="fp-input" step="0.01" required>
+          </div>
+          <div class="form-group">
+            <label class="fp-label">Alert Threshold (%)</label>
+            <input type="number" name="alert_threshold" id="editAlertThreshold" class="fp-input" min="0" max="100" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-ghost" onclick="closeModal('editBudgetModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-overlay" id="deleteBudgetModal">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <h3>Delete Budget</h3>
+      <button class="modal-close" onclick="closeModal('deleteBudgetModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <p>Are you sure you want to delete the budget for "<span id="deleteBudgetName"></span>"?</p>
+      <p class="text-muted" style="font-size:0.875rem">This action cannot be undone.</p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-ghost" onclick="closeModal('deleteBudgetModal')">Cancel</button>
+      <form method="post" id="deleteBudgetForm" style="display:inline">
+        {% csrf_token %}
+        <button type="submit" class="btn-danger">Delete Budget</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+// Edit Budget
+function editBudget(budgetId) {
+  fetch(`/api/budgets/${budgetId}/`)
+    .then(response => response.json())
+    .then(data => {
+      const editForm = document.getElementById('editBudgetForm');
+      editForm.action = `/budgets/${budgetId}/edit/`;
+      
+      document.getElementById('editBudgetId').value = data.id;
+      document.getElementById('editCategory').value = data.category_id;
+      document.getElementById('editLimitAmount').value = data.limit_amount;
+      document.getElementById('editAlertThreshold').value = data.alert_threshold;
+      
+      openModal('editBudgetModal');
+    })
+    .catch(error => {
+      console.error('Error fetching budget:', error);
+      alert('Error loading budget data. Please try again.');
+    });
+}
+
+// Delete Budget
+function deleteBudget(budgetId, budgetName) {
+  document.getElementById('deleteBudgetName').innerText = budgetName;
+  const deleteForm = document.getElementById('deleteBudgetForm');
+  deleteForm.action = `/budgets/${budgetId}/delete/`;
+  openModal('deleteBudgetModal');
+}
+
+// Modal functions
+function openModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.style.display = 'flex';
+  }
+}
+
+function closeModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.style.display = 'none';
+  }
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+  if (event.target.classList.contains('modal-overlay')) {
+    event.target.style.display = 'none';
+  }
+}
+
+// Make currency available to JS
+const CURRENCY = "{{ currency }}";
+</script>
+{% endblock %}
