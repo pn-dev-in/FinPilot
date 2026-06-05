@@ -185,32 +185,32 @@ This project demonstrates practical experience in:
 
 ### 🏠 Landing Page
 
-![Landing Page]<img width="1897" height="949" alt="image" src="https://github.com/user-attachments/assets/d8c1868d-c5cf-423f-afaa-06f40163bfc3" />
+Landing Page<img width="1897" height="949" alt="image" src="https://github.com/user-attachments/assets/d8c1868d-c5cf-423f-afaa-06f40163bfc3" />
 
 
 ---
 
 ### 📊 Financial Dashboard
 
-![Dashboard]<img width="1919" height="965" alt="image" src="https://github.com/user-attachments/assets/a1fbfa53-53d9-49e4-8e77-e13c111a1e1c" />
+Dashboard<img width="1919" height="965" alt="image" src="https://github.com/user-attachments/assets/a1fbfa53-53d9-49e4-8e77-e13c111a1e1c" />
 
 ---
 
 ### 💳 Transaction Management
 
-![Transactions]<img width="1919" height="960" alt="image" src="https://github.com/user-attachments/assets/9b6c97d9-076c-4701-8546-783cac5e386c" />
+Transactions<img width="1919" height="960" alt="image" src="https://github.com/user-attachments/assets/9b6c97d9-076c-4701-8546-783cac5e386c" />
 
 ---
 
 ### 🎯 Budget Management
 
-![Budgets](img width="1919" height="952" alt="image" src="https://github.com/user-attachments/assets/92f93817-8a13-424a-8452-66e8d830d5a9" />
+Budgets<img width="1919" height="952" alt="image" src="https://github.com/user-attachments/assets/92f93817-8a13-424a-8452-66e8d830d5a9" />
 
 ---
 
 ### 💰 Savings Goals Tracker
 
-![Savings Goals]<img width="1915" height="969" alt="image" src="https://github.com/user-attachments/assets/b18f67ee-a8ae-4275-a25d-cf5a70635247" />
+Savings Goals<img width="1915" height="969" alt="image" src="https://github.com/user-attachments/assets/b18f67ee-a8ae-4275-a25d-cf5a70635247" />
 
 ---
 
@@ -222,26 +222,25 @@ This project demonstrates practical experience in:
 
 ### 📉 Financial Forecasting
 
-![Forecasting]<img width="1919" height="971" alt="image" src="https://github.com/user-attachments/assets/8901093f-b821-48f0-bd76-13172ea20212" />
+Forecasting<img width="1919" height="971" alt="image" src="https://github.com/user-attachments/assets/8901093f-b821-48f0-bd76-13172ea20212" />
 
 ---
 
 ### 🔍 Profile Page
 
-![Profile]<img width="1919" height="974" alt="image" src="https://github.com/user-attachments/assets/f3f2566c-f51e-41e7-b0c8-3c1add7b8966" />
-
+Profile<img width="1919" height="974" alt="image" src="https://github.com/user-attachments/assets/f3f2566c-f51e-41e7-b0c8-3c1add7b8966" />
 
 ---
 
 ### 🌙 Dark Mode Interface
 
-![Dark Mode]<img width="1919" height="966" alt="image" src="https://github.com/user-attachments/assets/798da1b1-6f72-440c-bfee-47c82d52f559" />
+Dark Mode<img width="1919" height="966" alt="image" src="https://github.com/user-attachments/assets/798da1b1-6f72-440c-bfee-47c82d52f559" />
 
 ---
 
 ### 📱 Mobile Responsive Design
 
-![Mobile View]<img width="373" height="808" alt="image" src="https://github.com/user-attachments/assets/29df347c-06d7-4563-b03b-4e4789c6694c" />
+Mobile View<img width="373" height="808" alt="image" src="https://github.com/user-attachments/assets/29df347c-06d7-4563-b03b-4e4789c6694c" />
 
 ---
 
@@ -265,6 +264,8 @@ This project demonstrates practical experience in:
 Computer Science & Engineering
 
 GitHub: https://github.com/pn-dev-in
+
+LinkedIn: www.linkedin.com/in/pravesh-nandanwar
 
 ---
 
