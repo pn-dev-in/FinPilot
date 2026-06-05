@@ -196,8 +196,13 @@ class DashboardService:
         """
         income = float(self.get_monthly_income())
         expense = float(self.get_monthly_expense())
+    
+        # If no data yet, return 0 instead of 50 (so user knows they need to add transactions)
+        if income == 0 and expense == 0:
+            return 0  # Changed from 50 to 0
+
         if income == 0:
-            return 50  # neutral if no data
+            return 0
 
         # Savings ratio score (0-40)
         savings_ratio = max(0, (income - expense) / income)

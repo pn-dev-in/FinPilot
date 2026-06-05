@@ -55,6 +55,18 @@
   </div>
   </div>
 
+  <!-- Show message when no transactions exist -->
+{% if not recent_transactions %}
+<div class="info-banner">
+  <div class="info-icon">📊</div>
+  <div class="info-content">
+    <h3>Welcome to FinPilot!</h3>
+    <p>Start by adding your first transaction to see your financial dashboard come to life.</p>
+    <a href="{% url 'transactions' %}" class="btn-primary btn-sm">+ Add Transaction</a>
+  </div>
+</div>
+{% endif %}
+
   <!-- Health Score Gauge + Trend Chart -->
   <div class="dash-row">
     <div class="dash-card dash-card-sm">
